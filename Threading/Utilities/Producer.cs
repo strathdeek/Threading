@@ -22,7 +22,8 @@ namespace Threading.Utilities
             {
                 while (!stopped)
                 {
-                    currentNumber += increment; // < generate new number from the sequence >
+                    // Generate the next number in the sequence
+                    currentNumber += increment; 
 
                     sequencer.PerformAsync((queue) => {
                         queue.Enqueue(currentNumber);
