@@ -27,11 +27,10 @@ namespace Threading.Utilities
                 while (!stopped)
                 {
                     // Generate the next number in the sequence
-                    currentNumber += increment; 
+                    currentNumber += increment;
 
                     await sequencer.PerformAsync((queue) => {
                         queue.Enqueue(currentNumber);
-                        Console.WriteLine(currentNumber);
                      });
 
                     // fetch the current delay, wait that time, then push it to the back
