@@ -26,22 +26,30 @@ namespace Threading.Utilities
 
         public Sequencer()
         {
+            Start();
+        }
+
+        public void Start()
+        {
+            stopped = false;
             var thread = new Thread(() =>
             {
-                while (!stopped && hasRequestsToProcess)
+                while (!stopped)
                 {
                     // Take next request and process it.
-                    Action<Queue<int>> request = requestQueue.Dequeue();
-                    request(queue); 
-
-                    // Trim the queue if needed
-                    while (queue.Count>20)
+                    if(requestQueue.TryDequeue(out Action<Queue<int>> request))
                     {
-                        queue.Dequeue();
-                    }
+                        request?.Invoke(queue);
 
-                    queueChangedNotifier?.Invoke(queue);
-                    Thread.Sleep(10);
+                        // Trim the queue if needed
+                        while (queue.Count > 20)
+                        {
+                            queue.Dequeue();
+                        }
+
+                        queueChangedNotifier?.Invoke(queue);
+                        Thread.Sleep(10);
+                    }
                 }
             });
 
@@ -57,7 +65,11 @@ namespace Threading.Utilities
         {
             lock (queueLock)
             {
-                return Task.Run(() => requestQueue.Enqueue(action));
+                return Task.Run(() =>
+                {
+                    requestQueue.Enqueue(action);
+                });
+
             }
         }
     }

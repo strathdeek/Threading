@@ -11,8 +11,19 @@ using UIKit;
 
 namespace Threading
 {
-    [Register("ViewController")]
+    [Register ("ViewController")]
     partial class ViewController
     {
+        [Outlet]
+        [GeneratedCode ("iOS Designer", "1.0")]
+        UIKit.UITableView queueTableView { get; set; }
+
+        void ReleaseDesignerOutlets ()
+        {
+            if (queueTableView != null) {
+                queueTableView.Dispose ();
+                queueTableView = null;
+            }
+        }
     }
 }

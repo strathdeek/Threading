@@ -136,6 +136,7 @@
         </Compile>
         <Compile Include="Utilities\Sequencer.cs" />
         <Compile Include="Utilities\Producer.cs" />
+        <Compile Include="QueueTableViewSource.cs" />
     </ItemGroup>
     <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>
