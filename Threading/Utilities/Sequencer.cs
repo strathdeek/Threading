@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,10 +9,20 @@ namespace Threading.Utilities
     public class Sequencer
     {
         private bool stopped = false;
-        private bool hasRequestsToProcess => true;
+        private bool hasRequestsToProcess => requestQueue.Any();
 
-        private Queue<int> queue; // This simulates the underlying database
-        public Action<Queue<int>> queueChangedNotifier; // Set by the UI to get notified when queue ischanged
+        // Lock to prevent issues resulting from simultaneous access
+        private readonly object queueLock = new object(); 
+
+        // Queue to store incoming requests
+        private Queue<Action<Queue<int>>> requestQueue = new Queue<Action<Queue<int>>>();
+
+        // Queue to simulate the underlying database
+        private readonly Queue<int> queue = new Queue<int>();
+
+        // Used to notify the UI of changes to the queue
+        public Action<Queue<int>> queueChangedNotifier; 
+
 
         public Sequencer()
         {
@@ -19,13 +30,19 @@ namespace Threading.Utilities
             {
                 while (!stopped && hasRequestsToProcess)
                 {
-                    Action<Queue<int>> request = (Q) => { }; //< take next request >
-                    request(queue); // Process the request
-                }
-                //<keep the queue 20 items at most by removing any exceeding old items if needed>
+                    // Take next request and process it.
+                    Action<Queue<int>> request = requestQueue.Dequeue();
+                    request(queue); 
 
-                queueChangedNotifier?.Invoke(queue);
-                //<wait 10ms before processing next request>
+                    // Trim the queue if needed
+                    while (queue.Count>20)
+                    {
+                        queue.Dequeue();
+                    }
+
+                    queueChangedNotifier?.Invoke(queue);
+                    Thread.Sleep(10);
+                }
             });
 
             thread.Start();
@@ -37,14 +54,11 @@ namespace Threading.Utilities
         }
 
         public Task PerformAsync(Action<Queue<int>> action)
-        // please keep the signature of this method, except maybe adding
-        // async if you need it and, of course, change the
-        // SomeClassThatImplementsTheQueue to a real name
         {
-            //<The sequencer might be busy when the method is called, so it must
-            //be able to somehow preserve the incoming requests. The Task returned by
-            //this method shall be set to the completed AFTER the request processing is
-            //completed on the background thread.>
+            lock (queueLock)
+            {
+                return Task.Run(() => requestQueue.Enqueue(action));
+            }
         }
     }
 }
